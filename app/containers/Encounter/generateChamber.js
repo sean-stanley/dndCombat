@@ -1,4 +1,4 @@
-import { includes, isEqual, uniq, uniqueId } from 'lodash';
+import { includes, isEqual, uniqWith, uniqueId } from 'lodash';
 
 import furnishings from './furnishings';
 
@@ -25,19 +25,19 @@ class RandomDie {
 export default class Chamber {
   constructor() {
     this.size = this.generateSizeOfChamber();
-    this.entrance = this.generateEntrance();
-    this.exits = [];
-    this.generateExits();
-    this.furnishings = this.getFurnishings();
+    // this.entrance = this.generateEntrance();
+    // this.exits = [];
+    // this.generateExits();
+    // this.furnishings = this.getFurnishings();
   }
 
   getSize() {
     return this.size;
   }
 
-  generateSizeOfChamber() {
+  generateSizeOfChamber(r) {
     const d20 = new RandomDie(20);
-    const roll = d20.rollOnce();
+    const roll = r || d20.rollOnce();
     switch (roll) {
       case 1 :
       case 2 :
@@ -62,42 +62,38 @@ export default class Chamber {
       case 15 :
         return { x: 10, y: 16, doors: 'large' };
       case 16 :
-        return { r: 3, x: 6, y: 6, doors: 'normal', illegalCoordinates: this.coordinatesFromEachCorner(1, 6, 6) };
+        return { r: 3, x: 6, y: 6, doors: 'normal', illegalCoordinates: this.constructor.coordinatesFromEachCorner(1, 6, 6) };
       case 17 :
-        return { r: 5, x: 10, y: 10, doors: 'large', illegalCoordinates: this.coordinatesFromEachCorner(3, 10, 10) };
+        return { r: 5, x: 10, y: 10, doors: 'large', illegalCoordinates: this.constructor.coordinatesFromEachCorner(3, 10, 10) };
       case 18 :
-        return { x: 8, y: 8, octagon: true, doors: 'large', illegalCoordinates: this.coordinatesFromEachCorner(3, 8, 8) };
+        return { x: 8, y: 8, octagon: true, doors: 'large', illegalCoordinates: this.constructor.coordinatesFromEachCorner(3, 8, 8) };
       case 19 :
+      case 20 :
         return {
           x: 12,
           y: 12,
           octagon: true,
           doors: 'large',
-          illegalCoordinates: this.coordinatesFromEachCorner(4, 12, 12).concat([[[1, 1], [11, 1], [1, 11], [11, 11]]]),
+          illegalCoordinates: this.constructor.coordinatesFromEachCorner(4, 12, 12).concat([[[1, 1], [10, 1], [1, 10], [10, 10]]]),
         };
-      case 20 :
-        return { x1: 8, x2: 12, y: 6, doors: 'large' };
       default:
         return {};
     }
   }
 
-  coordinatesFromEachCorner(num, x, y) {
+  static coordinatesFromEachCorner(num, x, y) {
     const results = [];
+    const maxX = x - 1;
+    const maxY = y - 1;
     for (let i = 0; i < num; i += 1) {
       results.push(
         [0, i], [i, 0],
-        [x, i], [x - i, 0],
-        [i, y], [0, y - i],
-        [x - i, y], [x, y - i],
+        [maxX, i], [maxX - i, 0],
+        [i, maxY], [0, maxY - i],
+        [maxX - i, maxY], [maxX, maxY - i],
       );
     }
-    if (!(num % 2) && num >= 4) {
-      results.push(
-        [1, 1], [x - 1, 1], [1, y - 1], [x - 1, y - 1]
-      );
-    }
-    return uniq(results);
+    return uniqWith(results, isEqual);
   }
 
   generateExits() {
@@ -389,24 +385,26 @@ export default class Chamber {
       return exitResult[0];
     }
     // check if the location contains a furnishing
-    const furnishingResult = this.furnishings.filter((f) => f.location.x === x && f.location.y === y);
-    if (furnishingResult.length) {
-      return furnishingResult;
+    if (this.furnishings && this.furnishings.length) {
+      const furnishingResult = this.furnishings.filter((f) => f.location.x === x && f.location.y === y);
+      if (furnishingResult.length) {
+        return furnishingResult;
+      }
     }
 
     return {}; // empty location
   }
 
-  getFurnishings() {
+  getFurnishings(die1, d20Array) {
     const dieSize = this.size.doors === 'large' ? 10 : 6;
     const furnishingsAmountDie = new RandomDie(dieSize);
-    const furnishingsAmountRoll = furnishingsAmountDie.rollOnce() - 2;
+    const furnishingsAmountRoll = die1 || furnishingsAmountDie.rollOnce() - 2;
 
     if (furnishingsAmountRoll <= 0) {
       return [];
     }
     const d20 = new RandomDie(20);
-    const rolls = d20.roll(furnishingsAmountRoll);
+    const rolls = d20Array || d20.roll(furnishingsAmountRoll);
 
     return rolls.map(this.selectFurnishing);
   }

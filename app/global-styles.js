@@ -1,4 +1,5 @@
 import { injectGlobal } from 'styled-components';
+import 'bulma/css/bulma.css';
 
 /* eslint no-unused-expressions: 0 */
 injectGlobal`
