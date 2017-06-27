@@ -1,4 +1,4 @@
-import Creature from '../../character';
+import Monster from '../extensions/monster';
 
 const greatClub = {
   name: 'Giant Great Club',
@@ -14,7 +14,7 @@ const rock = {
   ability: 'str',
 };
 
-class HillGiant extends Creature {
+class HillGiant extends Monster {
   constructor() {
     super();
 
@@ -40,7 +40,8 @@ class HillGiant extends Creature {
 const giant = new HillGiant();
 
 giant.equipWeapon([greatClub, rock]);
+giant.setMultiAttack([greatClub, greatClub]);
 
-// giant.analyzeAttacks();
+// giant.analyzeStrategies();
 
 export default giant;

@@ -1,4 +1,4 @@
-import Creature from '../../character';
+import Spellcaster from '../extensions/spellcaster';
 
 import {
   rayOfFrost,
@@ -12,7 +12,7 @@ import {
   animateObjectsHuge,
 } from '../../defaultWeapons';
 
-class Hecks extends Creature {
+class Hecks extends Spellcaster {
   constructor() {
     super();
     // ability scores

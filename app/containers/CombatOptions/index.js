@@ -40,6 +40,12 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
     const playerAttacks = player.analyzeAttacks(creature);
     const playerSpells = player.analyzeSpells(creature);
     const creatureAttacks = creature.analyzeAttacks(player);
+    const creatureStrategies = creature.analyzeStrategies(player);
+
+    const weaponNames = [...player.weapons].map((w) => w[0].name);
+
+    console.log(weaponNames);
+
     return (
       <div>
         <Helmet
@@ -59,17 +65,17 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
                 </p>
                 <h2>Attacks</h2>
                 <ul>
-                  {player.weapons.map((weapon) =>
-                    <li key={weapon.name}>
-                      {weapon.name} +{player.getWeaponAccuracy(weapon)} {weapon.damageStr}+{weapon.noAbilityToDamage ? 0 : player.getWeaponAbility(weapon)}
+                  {[...player.weapons].map((weapon) =>
+                    <li key={weapon[0].name}>
+                      {weapon[0].name} +{player.getWeaponAccuracy(weapon[0])} {weapon[0].damageStr}+{weapon[0].noAbilityToDamage ? 0 : player.getWeaponAbility(weapon[0])}
                     </li>
                   )}
                 </ul>
                 <h2>Spells</h2>
                 <ul>
-                  {player.spells.map((spell) =>
-                    <li key={spell.name}>
-                      {spell.name} DC{player.getSpellDC()} {spell.damageStr} save for {spell.saveDamage * 100}% damage
+                  {[...player.spells].map((spell) =>
+                    <li key={spell[0].name}>
+                      {spell[0].name} DC{player.getSpellDC()} {spell[0].damageStr} save for {spell[0].saveDamage * 100}% damage
                     </li>
                   )}
                 </ul>
@@ -107,13 +113,25 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
                 </p>
                 <h2>Attacks</h2>
                 <ul>
-                  {creature.weapons.map((weapon) =>
-                    <li key={weapon.name}>
-                      {weapon.name} +{creature.getWeaponAccuracy(weapon)} {weapon.damageStr}+{weapon.noAbilityToDamage ? weapon.damageBonus || 0 : creature.getWeaponAbility(weapon)}
+                  {[...creature.weapons].map((weapon) =>
+                    <li key={weapon[0].name}>
+                      {weapon[0].name} +{creature.getWeaponAccuracy(weapon[0])} {weapon[0].damageStr}+{weapon[0].noAbilityToDamage ? weapon[0].damageBonus || 0 : creature.getWeaponAbility(weapon[0])}
                     </li>
                   )}
                 </ul>
                 <h3>Combat Analysis</h3>
+                <h4>Strategies</h4>
+                {creatureStrategies.map((strategy) =>
+                  <div key={strategy.strategyName}>
+                    <p>
+                      {strategy.strategyName}
+                    </p>
+                    <ul>
+                      <li>Effective Damage Value: {strategy.edv}</li>
+                      <li>Attacks to victory: {strategy.vc}</li>
+                    </ul>
+                  </div>
+                )}
                 {creatureAttacks.map((attack) =>
                   <div key={attack.weaponName}>
                     <p>
