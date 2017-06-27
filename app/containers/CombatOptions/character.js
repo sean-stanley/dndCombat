@@ -23,13 +23,9 @@ export default class Creature {
     this.hpTotal = 6 + this.con;
     this.hpCurrent = 6 + this.con;
 
-    this.spellcastingAbility = 'int';
-
     this.saveProficiencies = [];
 
-    this.weapons = [];
-
-    this.spells = []; // only for things with saving throws
+    this.weapons = new Set();
   }
 
   equipArmor(bonus) {
@@ -43,36 +39,12 @@ export default class Creature {
   }
 
   equipWeapon(weapon) {
-    if (Array.isArray(weapon)) {
-      this.weapons = this.weapons.concat(weapon);
-    } else {
-      this.weapons.push(weapon);
-    }
-    return this.weapons;
-  }
-
-  equipSpells(spell) {
-    if (Array.isArray(spell)) {
-      this.spells = this.spells.concat(spell);
-    } else {
-      this.spells.push(spell);
-    }
-    return this.spells;
+    return this.weapons.add(weapon);
   }
 
   setSaveProficiencies(arrayOfAbilities) {
     this.saveProficiencies = arrayOfAbilities;
     return this.saveProficiencies;
-  }
-
-  getSpellDC(bonus = 0) {
-    return 8 + this[this.spellcastingAbility] + this.proficiency + bonus;
-  }
-
-  setSpellcastingAbility(ability) {
-    // add error checking;
-    this.spellcastingAbility = this[ability];
-    return this.spellcastingAbility;
   }
 
   setProficiency(newProficiency) {
@@ -104,12 +76,12 @@ export default class Creature {
 
   getD20Probability(difficulty, bonus, options = {}) {
     let successChance = (20 - (difficulty - bonus)) / 20;
-    successChance = Math.min(successChance, 0);
-    successChance = Math.max(successChance, 1);
+    successChance = Math.max(successChance, 0);
+    successChance = Math.min(successChance, 1);
     if (options.critRange && options.critRange > 0) {
       // subtract critical hit probability
       const critChance = options.critRange / 20;
-      return Math.max(successChance - critChance);
+      successChance = Math.max(successChance - critChance, 0);
     }
     if (options.advantage) {
       // 1-(1-m)^n
@@ -117,6 +89,7 @@ export default class Creature {
     } else if (options.disadvantage) {
       return successChance ** 2;
     }
+
     return successChance;
   }
 
@@ -145,11 +118,13 @@ export default class Creature {
     const avg = ((max + min) / 2);
     return bonus + (isCritical ? 2 * avg : avg) + (weapon.noAbilityToDamage ? 0 : ability);
   }
-  getEffectiveDamageValue(targetAC, weapon, options = {
-    attackBonus: 0, damageBonus: 0, critRange: 1,
-  }) {
-    const hit = this.accuracyPercentage(weapon, targetAC, options) * this.getAverageDamage(weapon, options.damageBonus || weapon.damageBonus || 0);
-    const crit = (this.critRange || 0.05) * this.getAverageDamage(weapon, options.damageBonus, true);
+  getEffectiveDamageValue(targetAC, weapon, options = {}) {
+    const defaultOptions = {
+      attackBonus: 0, damageBonus: 0, critRange: 1,
+    };
+    const mergedOptions = Object.assign({}, defaultOptions, options);
+    const hit = this.accuracyPercentage(weapon, targetAC, mergedOptions) * this.getAverageDamage(weapon, mergedOptions.damageBonus || weapon.damageBonus || 0);
+    const crit = (this.critRange || 0.05) * this.getAverageDamage(weapon, mergedOptions.damageBonus, true);
     return hit + crit;
   }
 
@@ -159,30 +134,13 @@ export default class Creature {
     return Math.ceil(targetCurrentHP / eDV); // round up to nearest whole round.
   }
 
-  getSpellSaveProb(targetSave, options) {
-    const percentPass = this.getD20Probability(this.getSpellDC(), targetSave, options);
-    const percentFail = 1 - percentPass;
-    return percentFail;
-  }
-
-  getEffectiveSpellDamageValue(targetSave, spell, options = { damageBonus: 0 }) {
-    const failSave = this.getSpellSaveProb(targetSave, options) * this.getAverageDamage(spell, options.damageBonus || 0);
-
-    const passSave = (1 - this.getSpellSaveProb(targetSave, options)) * this.getAverageDamage(spell, options.damageBonus || 0) * spell.saveDamage;
-    console.log(failSave);
-    console.log(passSave);
-    return failSave + passSave;
-  }
-
-  getSpellVictoryCount(targetCurrentHP, targetSave, spell, options = { damageBonus: 0 }) {
-    const eDV = this.getEffectiveSpellDamageValue(targetSave, spell, options);
-    return Math.ceil(targetCurrentHP / eDV); // round up to nearest whole round.
-  }
-
   analyzeAttacks(target = { hpCurrent: 100, getAC() { return 15; }, savingThrow: 3 }) {
-    if (this.weapons.length > 0) {
+    if (this.weapons.size > 0) {
       const results = [];
       this.weapons.forEach((weapon) => {
+        if (Array.isArray(weapon)) {
+          weapon = weapon[0]; // eslint-disable-line no-param-reassign
+        }
         const edv = this.getEffectiveDamageValue(target.getAC(), weapon);
         const vc = this.getVictoryCount(target.hpCurrent, target.getAC(), weapon);
 
@@ -210,54 +168,6 @@ export default class Creature {
         `);
         results.push({
           weaponName: weapon.name,
-          edv,
-          vc,
-          edvAdvantage,
-          vcAdvantage,
-          edvDisadvantage,
-          vcDisadvantage,
-        });
-      });
-      results.sort((a, b) => b.edv - a.edv);
-      console.log(results);
-      return results;
-    }
-    return null;
-  }
-
-  analyzeSpells(target = { hpCurrent: 100, totalAC: 15, savingThrow: 7 }) {
-    if (this.spells.length > 0) {
-      const results = [];
-      this.spells.forEach((spell) => {
-        const saveBonus = target.savingThrow || target.getSave(spell.saveAbility);
-        const edv = this.getEffectiveSpellDamageValue(saveBonus, spell);
-        const vc = this.getSpellVictoryCount(target.hpCurrent, saveBonus, spell);
-
-        const edvAdvantage = this.getEffectiveSpellDamageValue(saveBonus, spell, { advantage: 1 });
-        const vcAdvantage = this.getSpellVictoryCount(target.hpCurrent, saveBonus, spell, { advantage: 1 });
-
-        const edvDisadvantage = this.getEffectiveSpellDamageValue(saveBonus, spell, { disadvantage: 1 });
-        const vcDisadvantage = this.getSpellVictoryCount(target.hpCurrent, saveBonus, spell, { disadvantage: 1 });
-
-        console.log(`
-          --------------------------------------
-          Analysis of ${spell.name} (DC ${this.getSpellDC()}):
-          Target Spell Save ${target.savingThrow}, HP: ${target.hpCurrent}
-          Effective Damage Value: ${edv}
-          Victory would take  ${vc} castings
-
-          ## With Advantage on the save
-          - Effective Damage Value: ${edvAdvantage}
-          - Victory would take ${vcAdvantage} castings
-
-          ## With Disadvantage on the save
-          - Effective Damage Value: ${edvDisadvantage}
-          - Victory would take ${vcDisadvantage} castings
-          ---------------------------------------
-
-        `);
-        results.push({
-          spellName: spell.name,
           edv,
           vc,
           edvAdvantage,
