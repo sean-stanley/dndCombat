@@ -1,18 +1,21 @@
-import Creature from '../../character';
+import Creature from '../creature';
 
 export default class Monster extends Creature {
   constructor() {
     super();
-    this.strategies = new Set();
+    this.strategies = [];
   }
 
   setMultiAttack(weapons, options = {}) {
     if (Array.isArray(weapons) && weapons.length > 1) {
-      return this.strategies.add({
+      this.strategies.push({
         name: 'multiAttack',
         weapons,
         options,
+        action: 'standard',
+        numberOfAttacks: weapons.length,
       });
+      return this.strategies;
     } return undefined;
   }
 
@@ -23,15 +26,20 @@ export default class Monster extends Creature {
     , 0);
   }
 
+  multiAttackDamage(strategy, damageOptions = {}) {
+    return strategy.weapons.reduce((total, weapon) => total + this.getAverageDamage(weapon, damageOptions));
+  }
+
   pureStrategyVictoryCount(targetCurrentHP, targetAC, strategy, options = { attackBonus: 0, damageBonus: 0 }) {
     const eDV = this[strategy.name](strategy, targetAC, options);
     return Math.ceil(targetCurrentHP / eDV);
   }
 
   analyzeStrategies(target = { hpCurrent: 100, getAC() { return 15; }, savingThrow: 3 }) {
-    if (this.strategies.size > 0) {
+    if (this.strategies.length > 0) {
       const results = [];
       this.strategies.forEach((strategy) => {
+        // const damage = this.
         const edv = this[strategy.name](strategy, target.getAC());
         const vc = this.pureStrategyVictoryCount(target.hpCurrent, target.getAC(), strategy);
 

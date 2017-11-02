@@ -25,7 +25,7 @@ export default class Creature {
 
     this.saveProficiencies = [];
 
-    this.weapons = new Set();
+    this.weapons = [];
   }
 
   equipArmor(bonus) {
@@ -38,8 +38,9 @@ export default class Creature {
     return this.totalAC;
   }
 
-  equipWeapon(weapon) {
-    return this.weapons.add(weapon);
+  equipWeapon(...weapons) {
+    this.weapons.push(...weapons);
+    return this.weapons;
   }
 
   setSaveProficiencies(arrayOfAbilities) {
@@ -70,6 +71,11 @@ export default class Creature {
   getSave(ability) {
     const proficiency = this.saveProficiencies.includes(ability) ? this.proficiency : 0;
     return this[ability] + proficiency;
+  }
+
+  savePassProbability(dc, ability, rollOptions) {
+    const saveBonus = this.getSave(ability);
+    return this.getD20Probability(dc, saveBonus, rollOptions);
   }
 
   // getEffectiveDamageValue for 1 round
@@ -135,12 +141,13 @@ export default class Creature {
   }
 
   analyzeAttacks(target = { hpCurrent: 100, getAC() { return 15; }, savingThrow: 3 }) {
-    if (this.weapons.size > 0) {
+    if (this.weapons.length > 0) {
       const results = [];
       this.weapons.forEach((weapon) => {
         if (Array.isArray(weapon)) {
           weapon = weapon[0]; // eslint-disable-line no-param-reassign
         }
+        const damage = this.getAverageDamage(weapon);
         const edv = this.getEffectiveDamageValue(target.getAC(), weapon);
         const vc = this.getVictoryCount(target.hpCurrent, target.getAC(), weapon);
 
@@ -168,6 +175,7 @@ export default class Creature {
         `);
         results.push({
           weaponName: weapon.name,
+          damage,
           edv,
           vc,
           edvAdvantage,

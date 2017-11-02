@@ -1,4 +1,4 @@
-import Creature from '../../character';
+import Creature from '../creature';
 
 export default class Spellcaster extends Creature {
   constructor(args) {
@@ -6,17 +6,35 @@ export default class Spellcaster extends Creature {
     if (args) {
       this.spellcastingAbility = args.spellcastingAbility || 'int';
     }
-    this.spells = new Set(); // only for things with saving throws
+    this.spells = []; // only for things with saving throws
   }
 
-  equipSpells(spell) {
-    // can be an array and each spell gets added individually
-    return this.spells.add(spell);
+  equipSpells(...spell) {
+    this.spells.push(...spell);
+    return this.spells;
   }
 
   getSpellDC(bonus = 0) {
     return 8 + this[this.spellcastingAbility] + this.proficiency + bonus;
   }
+
+  setConcentration(bool) {
+    this.isConcentrating = bool;
+  }
+
+  // chanceOfConcentrationBeingBroken(threatAnalysis) {
+  //   const chanceOfLosingPerStrategy = [];
+  //   threatAnalysis.forEach((strategy) => {
+  //     // does the strategy have a chance to land multiple hits?
+  //     // does a hit impose a condition that auto ends concentration like stunned or incapacitated
+  //     // what would the save DC be per hit.
+  //     const saveDC = Math.max(10, Math.round(strategy.damage))
+  //     chanceOfLosingPerStrategy.push({
+  //       strategyName: strategy.name
+  //       probability: 1 - savePassProbability(saveDC)
+  //     })
+  //   })
+  // }
 
   setSpellcastingAbility(ability) {
     // add error checking;
@@ -45,7 +63,7 @@ export default class Spellcaster extends Creature {
   }
 
   analyzeSpells(target = { hpCurrent: 100, totalAC: 15, savingThrow: 7 }) {
-    if (this.spells.size > 0) {
+    if (this.spells.length > 0) {
       const results = [];
       this.spells.forEach((spell) => {
         if (Array.isArray(spell)) {

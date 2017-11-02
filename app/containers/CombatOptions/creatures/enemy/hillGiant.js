@@ -39,7 +39,7 @@ class HillGiant extends Monster {
 
 const giant = new HillGiant();
 
-giant.equipWeapon([greatClub, rock]);
+giant.equipWeapon(greatClub, rock);
 giant.setMultiAttack([greatClub, greatClub]);
 
 // giant.analyzeStrategies();

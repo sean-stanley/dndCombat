@@ -47,7 +47,7 @@ class Hecks extends Spellcaster {
 
 const hecks = new Hecks();
 
-hecks.equipWeapon([
+hecks.equipWeapon(
   rayOfFrost,
   dagger,
   animateObjectsTiny,
@@ -55,8 +55,8 @@ hecks.equipWeapon([
   animateObjectsMedium,
   animateObjectsLarge,
   animateObjectsHuge,
-]);
-hecks.equipSpells([fireball, coneOfCold]);
+);
+hecks.equipSpells(fireball, coneOfCold);
 
 // hecks.analyzeAttacks();
 // hecks.analyzeSpells();

@@ -16,14 +16,14 @@ import defaultWeapons from './defaultWeapons';
 // import CreatureView from '../../components/CreatureView';
 
 import Hecks from './creatures/players/hecks';
-import Monster from './creatures/enemy/hillGiant';
+import HillGiant from './creatures/enemy/hillGiant';
 
 export default class CombatOptions extends React.PureComponent { // eslint-disable-line react/prefer-stateless-function
   constructor(props) {
     super(props);
     this.state = {
       player: Hecks,
-      creature: Monster,
+      creature: HillGiant,
       weapons: defaultWeapons,
     };
   }
@@ -42,9 +42,7 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
     const creatureAttacks = creature.analyzeAttacks(player);
     const creatureStrategies = creature.analyzeStrategies(player);
 
-    const weaponNames = [...player.weapons].map((w) => w[0].name);
-
-    console.log(weaponNames);
+    console.log(creatureStrategies.length);
 
     return (
       <div>
@@ -61,21 +59,21 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
                 <h1 className="title">{player.name}</h1>
                 <h2 className="subtitle">Stats</h2>
                 <p>HP: {player.hpCurrent} / {player.hpTotal} ({(player.hpCurrent / player.hpTotal) * 100}%)
-                AC: {player.getAC()}
+                  AC: {player.getAC()}
                 </p>
                 <h2>Attacks</h2>
                 <ul>
-                  {[...player.weapons].map((weapon) =>
-                    <li key={weapon[0].name}>
-                      {weapon[0].name} +{player.getWeaponAccuracy(weapon[0])} {weapon[0].damageStr}+{weapon[0].noAbilityToDamage ? 0 : player.getWeaponAbility(weapon[0])}
+                  {player.weapons.map((weapon) =>
+                    <li key={weapon.name}>
+                      {weapon.name} +{player.getWeaponAccuracy(weapon)} {weapon.damageStr}+{weapon.noAbilityToDamage ? 0 : player.getWeaponAbility(weapon)}
                     </li>
                   )}
                 </ul>
                 <h2>Spells</h2>
                 <ul>
-                  {[...player.spells].map((spell) =>
-                    <li key={spell[0].name}>
-                      {spell[0].name} DC{player.getSpellDC()} {spell[0].damageStr} save for {spell[0].saveDamage * 100}% damage
+                  {player.spells.map((spell) =>
+                    <li key={spell.name}>
+                      {spell.name} DC{player.getSpellDC()} {spell.damageStr} save for {spell.saveDamage * 100}% damage
                     </li>
                   )}
                 </ul>
@@ -109,13 +107,13 @@ export default class CombatOptions extends React.PureComponent { // eslint-disab
                 <h1 className="title">{creature.name}</h1>
                 <h2 className="subtitle">Stats</h2>
                 <p>HP: {creature.hpCurrent} / {creature.hpTotal} ({(creature.hpCurrent / creature.hpTotal) * 100}%)
-                AC: {creature.getAC()}
+                  AC: {creature.getAC()}
                 </p>
                 <h2>Attacks</h2>
                 <ul>
-                  {[...creature.weapons].map((weapon) =>
-                    <li key={weapon[0].name}>
-                      {weapon[0].name} +{creature.getWeaponAccuracy(weapon[0])} {weapon[0].damageStr}+{weapon[0].noAbilityToDamage ? weapon[0].damageBonus || 0 : creature.getWeaponAbility(weapon[0])}
+                  {creature.weapons.map((weapon) =>
+                    <li key={weapon.name}>
+                      {weapon.name} +{creature.getWeaponAccuracy(weapon)} {weapon.damageStr}+{weapon.noAbilityToDamage ? weapon.damageBonus || 0 : creature.getWeaponAbility(weapon)}
                     </li>
                   )}
                 </ul>
